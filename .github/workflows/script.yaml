@@ -47,9 +47,10 @@ jobs:
 
       - name: 更新Gist
         run: |
-          GIST_USER=$(echo "$GIST_LINK" | cut -d '/' -f 1)
           GIST_ID=$(echo "$GIST_LINK" | cut -d '/' -f 2)
-          curl -X PATCH -H "Authorization: token $GIST_PAT" -d '{"files":{"nodes.txt":{"content":"'"$(cat nodes.txt)"'"}}}' https://api.github.com/gists/$GIST_ID
+          gist_content=$(cat nodes.txt | jq -Rsa .)
+          json_data=$(jq -n --arg content "$gist_content" '{"files":{"nodes.txt":{"content":$content}}}')
+          curl -X PATCH -H "Authorization: token $GIST_PAT" -H "Content-Type: application/json" -d "$json_data" https://api.github.com/gists/$GIST_ID
 
       - name: 提交并推送 nodes.txt 文件
         run: |
