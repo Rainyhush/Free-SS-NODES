@@ -9,12 +9,44 @@ on:
     branches:
       - main  # 当创建 PR 到 main 分支时触发
 
+env:
+  # GitHub Access Token for Gist
+  GIST_PAT: ${{ secrets.GIST_PAT }}
+  # GitHub username and gist id, separated by '/'
+  GIST_LINK: ${{ secrets.GIST_LINK }}
+
 jobs:
   build:
-    runs-on: macos-latest  # 在 macOS 上编译
+    runs-on: macos-latest
     steps:
       - name: 获取仓库代码
-        uses: actions/checkout@v3  # 获取代码
+        uses: actions/checkout@v3
+
+      - name: 设置Python环境
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+          architecture: "x64"
+          cache: "pip"
+
+      - name: 安装依赖
+        run: pip3 install -r requirements.txt
+
+      - name: 检查环境变量
+        run: |
+          if [ -z "$GIST_PAT" ]; then
+              echo "Error: 环境变量 'GIST_PAT' 不能为空"
+              exit 1
+          fi
+          if [ -z "$GIST_LINK" ]; then
+              echo "Error: 环境变量 'GIST_LINK' 不能为空"
+              exit 1
+          fi
+          LINK_PARTS=$(echo "$GIST_LINK" | awk -F'/' 'NF==2 && $1!="" && $2!=""')
+          if [ -z "$LINK_PARTS" ]; then
+              echo "Error: 环境变量 'GIST_LINK' 格式不正确，应为 'username/gist_id' 格式"
+              exit 1
+          fi
 
       - name: 执行文件点击打开获取ss节点信息
         run: |
@@ -23,17 +55,11 @@ jobs:
           echo "$ss_output" > nodes.txt
           echo "SS节点信息已获取并保存到 nodes.txt"
 
-      - name: 设置GIST_TOKEN
-        run: echo "GIST_TOKEN=${{ secrets.GIST_TOKEN }}" >> $GITHUB_ENV
-
-      - name: 创建或更新Gist
+      - name: 更新Gist
         run: |
-          gist_id="01aae4453fff5a78a7c6ed0cfa6b0ac1"  # 替换为你的Gist ID
-          if [ -z "$gist_id" ]; then
-            curl -X POST -H "Authorization: token $GIST_TOKEN" -d '{"description":"SS 节点信息","public":false,"files":{"nodes.txt":{"content":"'"$(cat nodes.txt)"'"}}}' https://api.github.com/gists
-          else
-            curl -X PATCH -H "Authorization: token $GIST_TOKEN" -d '{"files":{"nodes.txt":{"content":"'"$(cat nodes.txt)"'"}}}' https://api.github.com/gists/$gist_id
-          fi
+          GIST_USER=$(echo "$GIST_LINK" | cut -d '/' -f 1)
+          GIST_ID=$(echo "$GIST_LINK" | cut -d '/' -f 2)
+          curl -X PATCH -H "Authorization: token $GIST_PAT" -d '{"files":{"nodes.txt":{"content":"'"$(cat nodes.txt)"'"}}}' https://api.github.com/gists/$GIST_ID
 
       - name: 提交并推送 nodes.txt 文件
         run: |
