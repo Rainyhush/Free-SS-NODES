@@ -22,16 +22,6 @@ jobs:
       - name: 获取仓库代码
         uses: actions/checkout@v3
 
-      - name: 设置Python环境
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.x"
-          architecture: "x64"
-          cache: "pip"
-
-      - name: 安装依赖
-        run: pip3 install -r requirements.txt
-
       - name: 检查环境变量
         run: |
           if [ -z "$GIST_PAT" ]; then
