@@ -42,13 +42,13 @@ jobs:
         run: |
           ss_output=$(./ss)
           echo "$ss_output"
-          echo "$ss_output" > nodes.txt
+          echo "$ss_output" | grep '^ss://' > nodes.txt
           echo "SS节点信息已获取并保存到 nodes.txt"
 
       - name: 更新Gist
         run: |
           GIST_ID=$(echo "$GIST_LINK" | cut -d '/' -f 2)
-          gist_content=$(cat nodes.txt | jq -Rsa .)
+          gist_content=$(cat nodes.txt)
           json_data=$(jq -n --arg content "$gist_content" '{"files":{"nodes.txt":{"content":$content}}}')
           curl -X PATCH -H "Authorization: token $GIST_PAT" -H "Content-Type: application/json" -d "$json_data" https://api.github.com/gists/$GIST_ID
 
