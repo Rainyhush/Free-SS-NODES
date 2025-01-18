@@ -28,9 +28,17 @@ jobs:
 
       - name: 创建或更新Gist
         run: |
-          gist_id="your-gist-id-here"  # 如果已有Gist，替换为Gist ID；否则为空字符串
+          gist_id="01aae4453fff5a78a7c6ed0cfa6b0ac1"  # 替换为你的Gist ID
           if [ -z "$gist_id" ]; then
             curl -X POST -H "Authorization: token $GIST_TOKEN" -d '{"description":"SS 节点信息","public":false,"files":{"nodes.txt":{"content":"'"$(cat nodes.txt)"'"}}}' https://api.github.com/gists
           else
             curl -X PATCH -H "Authorization: token $GIST_TOKEN" -d '{"files":{"nodes.txt":{"content":"'"$(cat nodes.txt)"'"}}}' https://api.github.com/gists/$gist_id
           fi
+
+      - name: 提交并推送 nodes.txt 文件
+        run: |
+          git config user.name "GitHub Action"
+          git config user.email "action@github.com"
+          git add nodes.txt
+          git commit -m "Update nodes.txt with latest SS node information"
+          git push origin main
