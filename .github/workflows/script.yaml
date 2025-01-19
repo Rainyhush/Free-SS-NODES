@@ -1,6 +1,8 @@
 name: 自动获取ss节点
 
 on:
+  schedule:
+    - cron: "0 */12 * * *"
   workflow_dispatch:  # 使工作流支持手动触发
   push:
     branches:
